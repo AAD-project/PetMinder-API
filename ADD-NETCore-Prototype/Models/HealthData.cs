@@ -3,7 +3,7 @@ namespace Api.Models
     public class HealthData
     {
         public required string Id { get; set; }
-        // public required string PetId { get; set; }
+        public required string PetId { get; set; }
         public List<float>? WeightHistory { get; set; }
         public DateTime? LastVetVisit { get; set; }
         public List<string>? Vaccinations { get; set; }
