@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Api.DTOs;
 using Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -24,11 +26,11 @@ namespace Api.Controllers
             try
             {
                 var pets = await _petService.GetAllPetsAsync();
-                return Ok(pets); // Return 200 with the list of PetResponseDto
+                return Ok(pets);
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while fetching all pets.");
             }
         }
 
@@ -42,14 +44,14 @@ namespace Api.Controllers
 
                 if (pet == null)
                 {
-                    return NotFound();
+                    return NotFound(); // Return 404 if the pet is not found
                 }
 
                 return Ok(pet);
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while fetching the pet details.");
             }
         }
 
@@ -61,22 +63,22 @@ namespace Api.Controllers
         {
             if (newPet == null)
             {
-                return BadRequest("Pet data is invalid."); // Return 400 if no pet is provided
+                return BadRequest("Pet data is invalid.");
             }
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Return 400 if model validation fails
+                return BadRequest(ModelState);
             }
 
             try
             {
                 var addedPet = await _petService.AddPetAsync(newPet);
-                return CreatedAtAction(nameof(GetPetByIdAsync), new { id = addedPet.Id }, addedPet); // Return 201 with the created PetResponseDto
+                return CreatedAtAction(nameof(GetPetByIdAsync), new { id = addedPet.Id }, addedPet);
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while adding the pet.");
             }
         }
 
@@ -89,29 +91,28 @@ namespace Api.Controllers
         {
             if (updatedPet == null)
             {
-                return BadRequest("Pet data is invalid."); // Return 400 if no pet is provided
+                return BadRequest("Pet data is invalid.");
             }
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Return 400 if model validation fails
+                return BadRequest(ModelState);
             }
 
             try
             {
                 var existingPet = await _petService.GetPetByIdAsync(id);
-
                 if (existingPet == null)
                 {
-                    return NotFound(); // Return 404 if pet not found
+                    return NotFound();
                 }
 
                 await _petService.UpdatePetAsync(id, updatedPet);
-                return NoContent(); // Return 204 on successful update
+                return NoContent();
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while updating the pet."); // Ensure 500 is returned on exception
             }
         }
 
@@ -122,18 +123,17 @@ namespace Api.Controllers
             try
             {
                 var pet = await _petService.GetPetByIdAsync(id);
-
                 if (pet == null)
                 {
-                    return NotFound(); // Return 404 if pet not found
+                    return NotFound();
                 }
 
                 await _petService.DeletePetAsync(id);
-                return NoContent(); // Return 204 on successful deletion
+                return NoContent();
             }
             catch (Exception)
             {
-                return StatusCode(500, "An error occurred while processing your request.");
+                return StatusCode(500, "An error occurred while deleting the pet."); // Ensure 500 is returned on exception
             }
         }
     }
