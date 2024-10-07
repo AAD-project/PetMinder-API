@@ -1,0 +1,171 @@
+[
+    {
+      "Id": 1,
+      "Type": "Chore",
+      "Title": "Walk Fido in the park",
+      "IsCompleted": false,
+      "UserId": 1
+    },
+    {
+      "Id": 2,
+      "Type": "Feeding",
+      "Title": "Feed Whiskers",
+      "IsCompleted": true,
+      "UserId": 2
+    },
+    {
+      "Id": 3,
+      "Type": "Grooming",
+      "Title": "Brush Buddy's fur",
+      "IsCompleted": false,
+      "UserId": 3
+    },
+    {
+      "Id": 4,
+      "Type": "Training",
+      "Title": "Teach Luna new tricks",
+      "IsCompleted": false,
+      "UserId": 4
+    },
+    {
+      "Id": 5,
+      "Type": "Health",
+      "Title": "Schedule Charlie's vet appointment",
+      "IsCompleted": true,
+      "UserId": 5
+    },
+    {
+      "Id": 6,
+      "Type": "Feeding",
+      "Title": "Prepare Bella's meals",
+      "IsCompleted": true,
+      "UserId": 1
+    },
+    {
+      "Id": 7,
+      "Type": "Chore",
+      "Title": "Max's morning walk",
+      "IsCompleted": false,
+      "UserId": 2
+    },
+    {
+      "Id": 8,
+      "Type": "Grooming",
+      "Title": "Trim Molly's nails",
+      "IsCompleted": true,
+      "UserId": 3
+    },
+    {
+      "Id": 9,
+      "Type": "Training",
+      "Title": "Rocky's obedience training",
+      "IsCompleted": false,
+      "UserId": 4
+    },
+    {
+      "Id": 10,
+      "Type": "Health",
+      "Title": "Daisy's dental check-up",
+      "IsCompleted": true,
+      "UserId": 5
+    },
+    {
+      "Id": 11,
+      "Type": "Feeding",
+      "Title": "Oscar's evening meal",
+      "IsCompleted": false,
+      "UserId": 1
+    },
+    {
+      "Id": 12,
+      "Type": "Chore",
+      "Title": "Lily's playtime",
+      "IsCompleted": true,
+      "UserId": 2
+    },
+    {
+      "Id": 13,
+      "Type": "Grooming",
+      "Title": "Bailey's hair trimming",
+      "IsCompleted": false,
+      "UserId": 3
+    },
+    {
+      "Id": 14,
+      "Type": "Training",
+      "Title": "Teach Fido to fetch",
+      "IsCompleted": false,
+      "UserId": 1
+    },
+    {
+      "Id": 15,
+      "Type": "Health",
+      "Title": "Whiskers' vaccination",
+      "IsCompleted": true,
+      "UserId": 2
+    },
+    {
+      "Id": 16,
+      "Type": "Feeding",
+      "Title": "Buddy's breakfast",
+      "IsCompleted": true,
+      "UserId": 3
+    },
+    {
+      "Id": 17,
+      "Type": "Chore",
+      "Title": "Luna's afternoon walk",
+      "IsCompleted": false,
+      "UserId": 4
+    },
+    {
+      "Id": 18,
+      "Type": "Grooming",
+      "Title": "Charlie’s grooming session",
+      "IsCompleted": true,
+      "UserId": 5
+    },
+    {
+      "Id": 19,
+      "Type": "Training",
+      "Title": "Max's agility training",
+      "IsCompleted": false,
+      "UserId": 2
+    },
+    {
+      "Id": 20,
+      "Type": "Health",
+      "Title": "Molly's health check",
+      "IsCompleted": true,
+      "UserId": 3
+    },
+    {
+      "Id": 21,
+      "Type": "Feeding",
+      "Title": "Rocky's lunch",
+      "IsCompleted": false,
+      "UserId": 4
+    },
+    {
+      "Id": 22,
+      "Type": "Chore",
+      "Title": "Daisy's evening feed",
+      "IsCompleted": true,
+      "UserId": 5
+    },
+    {
+      "Id": 23,
+      "Type": "Grooming",
+      "Title": "Oscar's fur trimming",
+      "IsCompleted": false,
+      "UserId": 1
+    },
+    {
+      "Id": 24,
+      "Type": "Training",
+      "Title": "Lily's behavior training",
+      "IsCompleted": true,
+      "UserId": 2
+    }
+  ]
+  

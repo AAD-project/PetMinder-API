@@ -1,0 +1,29 @@
+trigger:
+  branches:
+    include:
+      - '*'  # Run the pipeline on all branches or specify branches like 'main'
+
+jobs:
+- job: FormatCheck
+  displayName: 'Check Code Format with CSharpier'
+  pool:
+    vmImage: 'windows-latest'
+  
+  steps:
+  - task: UseDotNet@2
+    displayName: 'Install .NET SDK'
+    inputs:
+      packageType: 'sdk'
+      version: '6.x'  # Specify your .NET version here
+
+  - script: |
+      dotnet tool install --global csharpier
+    displayName: 'Install CSharpier'
+  
+  - script: |
+      csharpier .
+    displayName: 'Run CSharpier'
+  
+  - script: |
+      csharpier . --check
+    displayName: 'Verify Formatting'
