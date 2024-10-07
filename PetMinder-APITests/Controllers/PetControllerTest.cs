@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Api.Controllers;
 using Api.DTOs;
 using Api.Services.Interfaces;
@@ -36,6 +39,20 @@ namespace Api.Tests.Controllers
         }
 
         [Fact]
+        public async Task GetAllPetsAsync_ReturnsInternalServerError_OnException()
+        {
+            // Arrange
+            _mockPetService.Setup(service => service.GetAllPetsAsync()).ThrowsAsync(new Exception());
+
+            // Act
+            var result = await _petController.GetAllPetsAsync();
+
+            // Assert
+            Assert.IsType<ObjectResult>(result.Result);
+            Assert.Equal(500, (result.Result as ObjectResult).StatusCode);
+        }
+
+        [Fact]
         public async Task GetPetByIdAsync_ReturnsOkResult_WithPet()
         {
             // Arrange
@@ -65,6 +82,20 @@ namespace Api.Tests.Controllers
         }
 
         [Fact]
+        public async Task GetPetByIdAsync_ReturnsInternalServerError_OnException()
+        {
+            // Arrange
+            _mockPetService.Setup(service => service.GetPetByIdAsync("1")).ThrowsAsync(new Exception());
+
+            // Act
+            var result = await _petController.GetPetByIdAsync("1");
+
+            // Assert
+            Assert.IsType<ObjectResult>(result.Result);
+            Assert.Equal(500, (result.Result as ObjectResult).StatusCode);
+        }
+
+        [Fact]
         public async Task AddPetAsync_ReturnsCreatedAtActionResult_WithCreatedPet()
         {
             // Arrange
@@ -79,6 +110,34 @@ namespace Api.Tests.Controllers
             var createdAtActionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
             var returnValue = Assert.IsType<PetResponseDto>(createdAtActionResult.Value);
             Assert.Equal("Buddy", returnValue.Name);
+        }
+
+        [Fact]
+        public async Task AddPetAsync_ReturnsBadRequest_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            _petController.ModelState.AddModelError("Name", "Required");
+
+            // Act
+            var result = await _petController.AddPetAsync(new PetCreateRequestDto());
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task AddPetAsync_ReturnsInternalServerError_OnException()
+        {
+            // Arrange
+            var newPet = new PetCreateRequestDto { Name = "Buddy" };
+            _mockPetService.Setup(service => service.AddPetAsync(newPet)).ThrowsAsync(new Exception());
+
+            // Act
+            var result = await _petController.AddPetAsync(newPet);
+
+            // Assert
+            Assert.IsType<ObjectResult>(result.Result);
+            Assert.Equal(500, (result.Result as ObjectResult).StatusCode);
         }
 
         [Fact]
@@ -111,6 +170,36 @@ namespace Api.Tests.Controllers
         }
 
         [Fact]
+        public async Task UpdatePetAsync_ReturnsBadRequest_WhenModelStateIsInvalid()
+        {
+            // Arrange
+            _petController.ModelState.AddModelError("Name", "Required");
+
+            // Act
+            var result = await _petController.UpdatePetAsync("1", new PetCreateRequestDto());
+
+            // Assert
+            Assert.IsType<BadRequestObjectResult>(result);
+        }
+
+        [Fact]
+        public async Task UpdatePetAsync_ReturnsInternalServerError_OnException()
+        {
+            // Arrange
+            var updatedPet = new PetCreateRequestDto { Name = "Buddy" };
+            _mockPetService.Setup(service => service.GetPetByIdAsync("1")).ReturnsAsync(new PetResponseDto { Id = "1", Name = "Buddy" });
+            _mockPetService.Setup(service => service.UpdatePetAsync("1", updatedPet)).ThrowsAsync(new Exception());
+
+            // Act
+            var result = await _petController.UpdatePetAsync("1", updatedPet);
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, objectResult.StatusCode);
+        }
+
+
+        [Fact]
         public async Task DeletePetAsync_ReturnsNoContent_WhenDeletionIsSuccessful()
         {
             // Arrange
@@ -136,5 +225,21 @@ namespace Api.Tests.Controllers
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
+
+        [Fact]
+        public async Task DeletePetAsync_ReturnsInternalServerError_OnException()
+        {
+            // Arrange
+            _mockPetService.Setup(service => service.GetPetByIdAsync("1")).ReturnsAsync(new PetResponseDto { Id = "1", Name = "Buddy" });
+            _mockPetService.Setup(service => service.DeletePetAsync("1")).ThrowsAsync(new Exception());
+
+            // Act
+            var result = await _petController.DeletePetAsync("1");
+
+            // Assert
+            var objectResult = Assert.IsType<ObjectResult>(result);
+            Assert.Equal(500, objectResult.StatusCode);
+        }
+
     }
 }
