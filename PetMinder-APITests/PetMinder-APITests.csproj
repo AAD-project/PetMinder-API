@@ -2,27 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>PetMinder_APITests</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-
-    <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+      <OutputPath>$(SolutionDir)bin\$(Configuration)\net8.0\</OutputPath>
+
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="3.1.1" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageReference Include="Moq" Version="4.20.72" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ADD-NETCore-Prototype\PetMinder-API.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
 </Project>
