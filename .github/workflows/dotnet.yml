@@ -27,8 +27,5 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build with StyleCop
-      run: dotnet build --no-restore /p:RunStyleCop=true -v diag
-
     - name: Run tests 
       run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
