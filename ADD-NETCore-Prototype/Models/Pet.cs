@@ -4,7 +4,7 @@ namespace Api.Models
 {
     public class Pet
     {
-        public string Id { get; set; } // Primary Key
+        public required string Id { get; set; } // Primary Key
         public required string Name { get; set; }
         public required string Gender { get; set; }
         public required string Type { get; set; }

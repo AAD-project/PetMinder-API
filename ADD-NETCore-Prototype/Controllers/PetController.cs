@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Api.DTOs;
 using Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -10,14 +8,9 @@ namespace Api.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class PetController : ControllerBase
+    public class PetController(IPetService petService) : ControllerBase
     {
-        private readonly IPetService _petService;
-
-        public PetController(IPetService petService)
-        {
-            _petService = petService;
-        }
+        private readonly IPetService _petService = petService;
 
         // GET: api/pet
         [HttpGet]
