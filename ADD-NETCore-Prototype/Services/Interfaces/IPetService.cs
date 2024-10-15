@@ -9,5 +9,10 @@ namespace Api.Services.Interfaces
         Task<PetResponseDto> AddPetAsync(PetCreateRequestDto petDto);
         Task<PetResponseDto> UpdatePetAsync(string id, PetCreateRequestDto updatedPetDto);
         Task DeletePetAsync(string id);
+        Task<HealthDataResponseDto> AddHealthDataAsync(
+            string petId,
+            HealthDataCreateRequestDto healthDataDto
+        );
+        Task DeleteHealthDataAsync(string petId, string healthDataId);
     }
 }

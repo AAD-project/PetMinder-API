@@ -136,5 +136,56 @@ namespace Api.Controllers
                 return StatusCode(500, "An error occurred while deleting the pet."); // Ensure 500 is returned on exception
             }
         }
+
+        // POST: api/pet/{id}/healthdata
+        [HttpPost("{id}/healthdata")]
+        public async Task<ActionResult<HealthDataResponseDto>> AddHealthDataAsync(
+            string id,
+            [FromBody] HealthDataCreateRequestDto newHealthData
+        )
+        {
+            if (newHealthData == null)
+            {
+                return BadRequest("Health data is invalid.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var healthData = await _petService.AddHealthDataAsync(id, newHealthData);
+                return Ok(healthData);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Pet with Id {id} not found.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while adding the health data.");
+            }
+        }
+
+        // DELETE: api/pet/{id}/healthdata/{healthDataId}
+        [HttpDelete("{id}/healthdata/{healthDataId}")]
+        public async Task<IActionResult> DeleteHealthDataAsync(string id, string healthDataId)
+        {
+            try
+            {
+                await _petService.DeleteHealthDataAsync(id, healthDataId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound($"Health data or Pet with Id {id} not found.");
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "An error occurred while deleting the health data.");
+            }
+        }
     }
 }
