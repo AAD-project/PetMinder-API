@@ -88,5 +88,52 @@ namespace Api.Services.Implementations
             // Return the updated pet as a response DTO
             return _mapper.Map<PetResponseDto>(pet);
         }
+
+        public async Task<HealthDataResponseDto> AddHealthDataAsync(
+            string petId,
+            HealthDataCreateRequestDto healthDataDto
+        )
+        {
+            if (healthDataDto == null)
+                throw new ArgumentNullException(
+                    nameof(healthDataDto),
+                    "Health data DTO cannot be null."
+                );
+
+            using var dbContext = await CreateDbContextAsync();
+
+            var pet =
+                await dbContext
+                    .Pets.Include(p => p.HealthData)
+                    .FirstOrDefaultAsync(p => p.Id == petId)
+                ?? throw new KeyNotFoundException($"Pet with Id {petId} not found.");
+
+            // Create and map the HealthData
+            var healthData = _mapper.Map<HealthData>(healthDataDto);
+            pet.HealthData = healthData;
+
+            await dbContext.SaveChangesAsync();
+
+            // Return the added health data
+            return _mapper.Map<HealthDataResponseDto>(healthData);
+        }
+
+        public async Task DeleteHealthDataAsync(string petId, string healthDataId)
+        {
+            using var dbContext = await CreateDbContextAsync();
+
+            var pet =
+                await dbContext
+                    .Pets.Include(p => p.HealthData)
+                    .FirstOrDefaultAsync(p => p.Id == petId)
+                ?? throw new KeyNotFoundException($"Pet with Id {petId} not found.");
+
+            if (pet.HealthData == null || pet.HealthData.Id != healthDataId)
+                throw new KeyNotFoundException($"Health data with Id {healthDataId} not found.");
+
+            // Remove HealthData
+            pet.HealthData = null;
+            await dbContext.SaveChangesAsync();
+        }
     }
 }
