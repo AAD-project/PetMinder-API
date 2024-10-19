@@ -8,7 +8,10 @@ public class MappingProfile : Profile
     {
         // User Mappings
         CreateMap<User, UserResponseDto>()
-            .ForMember(dest => dest.Pets, opt => opt.MapFrom(src => src.Pets));
+            .ForMember(dest => dest.Pets, opt => opt.MapFrom(src => src.Pets))
+            .ForMember(dest => dest.Tasks, opt => opt.MapFrom(src => src.Tasks))
+            .ForMember(dest => dest.Reminders, opt => opt.MapFrom(src => src.Reminders));
+
         CreateMap<UserCreateRequestDto, User>();
 
         // Pet Mappings

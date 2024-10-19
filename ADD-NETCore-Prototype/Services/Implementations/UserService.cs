@@ -1,113 +1,112 @@
-using Api.Data.Interface;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Api.DTOs;
 using Api.Models;
 using Api.Services.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Services.Implementations
 {
-    public class UserService : BaseService, IUserService
+    public class UserService : IUserService
     {
+        private readonly UserManager<User> _userManager;
         private readonly IMapper _mapper;
 
-        public UserService(IDbContextFactory dbContextFactory, IMapper mapper)
-            : base(dbContextFactory)
+        public UserService(UserManager<User> userManager, IMapper mapper)
         {
+            _userManager = userManager;
             _mapper = mapper;
         }
 
+        // Get all users
         public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
         {
-            using var dbContext = await CreateDbContextAsync();
-            var users = await dbContext
+            var users = await _userManager
                 .Users.Include(u => u.Pets)
                 .Include(u => u.Tasks)
                 .Include(u => u.Reminders)
                 .ToListAsync();
 
-            // Map list of User entities to list of UserResponseDto
             return _mapper.Map<IEnumerable<UserResponseDto>>(users);
         }
 
+        // Get user by ID
         public async Task<UserResponseDto> GetUserByIdAsync(string id)
         {
-            using var dbContext = await CreateDbContextAsync();
-            var user =
-                await dbContext
-                    .Users.Include(u => u.Pets)
-                    .Include(u => u.Tasks)
-                    .Include(u => u.Reminders)
-                    .FirstOrDefaultAsync(u => u.Id == id)
-                ?? throw new KeyNotFoundException($"User with Id {id} not found.");
+            var user = await _userManager
+                .Users.Include(u => u.Pets)
+                .Include(u => u.Tasks)
+                .Include(u => u.Reminders)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
-            // Map the User entity to UserResponseDto
+            if (user == null)
+                throw new KeyNotFoundException($"User with Id {id} not found.");
+
             return _mapper.Map<UserResponseDto>(user);
         }
 
+        // Add new user (Use Identity's CreateAsync for user creation)
         public async Task<UserResponseDto> AddUserAsync(UserCreateRequestDto userDto)
         {
-            if (userDto == null)
-                throw new ArgumentNullException(nameof(userDto), "User data cannot be null.");
-
-            using var dbContext = await CreateDbContextAsync();
-
-            // Map the incoming UserCreateRequestDto to the User entity
             var user = _mapper.Map<User>(userDto);
-            await dbContext.Users.AddAsync(user);
-            await dbContext.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, userDto.Password);
 
-            // Return the newly created user as a response DTO
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors));
+            }
+
             return _mapper.Map<UserResponseDto>(user);
         }
 
+        // Update user information
         public async Task<UserResponseDto> UpdateUserAsync(
             string id,
             UserCreateRequestDto updatedUserDto
         )
         {
-            if (updatedUserDto == null)
-                throw new ArgumentNullException(
-                    nameof(updatedUserDto),
-                    "Updated user data cannot be null."
-                );
+            var existingUser = await _userManager.FindByIdAsync(id);
+            if (existingUser == null)
+                throw new KeyNotFoundException($"User with Id {id} not found.");
 
-            using var dbContext = await CreateDbContextAsync();
-            var existingUser =
-                await dbContext
-                    .Users.Include(u => u.Pets)
-                    .Include(u => u.Tasks)
-                    .Include(u => u.Reminders)
-                    .FirstOrDefaultAsync(u => u.Id == id)
-                ?? throw new KeyNotFoundException($"User with Id {id} not found.");
-
-            // Map the updated DTO values to the existing User entity
+            // Update user properties
             _mapper.Map(updatedUserDto, existingUser);
 
-            await dbContext.SaveChangesAsync();
+            var result = await _userManager.UpdateAsync(existingUser);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors));
+            }
 
-            // Return the updated user as a response DTO
             return _mapper.Map<UserResponseDto>(existingUser);
         }
 
+        // Delete user using UserManager
         public async Task DeleteUserAsync(string id)
         {
-            using var dbContext = await CreateDbContextAsync();
-            var user =
-                await dbContext.Users.FirstOrDefaultAsync(u => u.Id == id)
-                ?? throw new KeyNotFoundException($"User with Id {id} not found.");
-            dbContext.Users.Remove(user);
-            await dbContext.SaveChangesAsync();
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null)
+                throw new KeyNotFoundException($"User with Id {id} not found.");
+
+            var result = await _userManager.DeleteAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(string.Join(", ", result.Errors));
+            }
         }
 
+        // Get all pets for a user
         public async Task<IEnumerable<PetResponseDto>> GetAllPetsFromUserAsync(string ownerId)
         {
-            using var dbContext = await CreateDbContextAsync();
-            var user =
-                await dbContext.Users.Include(u => u.Pets).FirstOrDefaultAsync(u => u.Id == ownerId)
-                ?? throw new KeyNotFoundException($"User with Id {ownerId} not found.");
+            var user = await _userManager
+                .Users.Include(u => u.Pets)
+                .FirstOrDefaultAsync(u => u.Id == ownerId);
 
-            // Map the list of Pet entities to a list of PetResponseDto
+            if (user == null)
+                throw new KeyNotFoundException($"User with Id {ownerId} not found.");
+
             return _mapper.Map<IEnumerable<PetResponseDto>>(user.Pets);
         }
     }

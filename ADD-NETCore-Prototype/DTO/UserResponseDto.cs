@@ -6,6 +6,8 @@ namespace Api.DTOs
         public required string FirstName { get; set; }
         public required string LastName { get; set; }
         public required string Email { get; set; }
+
+        // Additional fields for related entities
         public List<PetResponseDto>? Pets { get; set; }
         public List<TodoTaskResponseDto>? Tasks { get; set; }
         public List<ReminderResponseDto>? Reminders { get; set; }

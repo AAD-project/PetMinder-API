@@ -4,7 +4,7 @@ namespace Api.Models
 {
     public class Pet
     {
-        public string Id { get; set; } // Primary Key
+        public string Id { get; set; } = Guid.NewGuid().ToString(); // Primary Key
         public required string Name { get; set; }
         public required string Gender { get; set; }
         public required string Type { get; set; }
