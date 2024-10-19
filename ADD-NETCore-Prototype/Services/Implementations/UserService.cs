@@ -51,7 +51,7 @@ namespace Api.Services.Implementations
         public async Task<UserResponseDto> AddUserAsync(UserCreateRequestDto userDto)
         {
             var user = _mapper.Map<User>(userDto);
-            var result = await _userManager.CreateAsync(user, userDto.Password);
+            var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded)
             {

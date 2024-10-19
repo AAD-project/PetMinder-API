@@ -48,9 +48,10 @@ namespace Api.Controllers
         }
 
         // PATCH api/user/me
+        [Authorize]
         [HttpPatch("me")]
         public async Task<IActionResult> UpdateCurrentUserAsync(
-            [FromBody] UserUpdateRequestDto updatedUserDto
+            [FromBody] UserCreateRequestDto CreateUserDto
         )
         {
             if (!ModelState.IsValid)
@@ -58,25 +59,38 @@ namespace Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Get the authenticated user's ID from the token
+            // Get the authenticated user's ID from the token (NameIdentifier claim)
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            // Check if userId exists (this should not happen unless something went wrong with the token)
+            if (userId == null)
+            {
+                return Unauthorized("User is not authenticated.");
+            }
+
+            // Find the current user by ID
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return NotFound();
+                return NotFound("User not found.");
             }
 
             // Map the updated fields from the DTO to the user model
-            _mapper.Map(updatedUserDto, user);
+            // This assumes _mapper is configured to handle null/unchanged properties
+            _mapper.Map(CreateUserDto, user);
 
+            // Update the user information using UserManager
             var result = await _userManager.UpdateAsync(user);
+
+            // Handle potential errors during the update
             if (!result.Succeeded)
             {
-                return BadRequest(result.Errors);
+                // Return a list of errors if the update failed
+                return BadRequest(result.Errors.Select(e => e.Description));
             }
 
-            return NoContent();
+            // Optionally, return the updated user (or just return NoContent if not needed)
+            return Ok(user); // Alternatively, return NoContent();
         }
 
         // DELETE api/user/me
@@ -147,7 +161,7 @@ namespace Api.Controllers
 
             var newUser = _mapper.Map<User>(newUserDto); // Map the UserCreateRequestDto to User
 
-            var result = await _userManager.CreateAsync(newUser, newUserDto.Password);
+            var result = await _userManager.CreateAsync(newUser);
             if (!result.Succeeded)
             {
                 return BadRequest(result.Errors);

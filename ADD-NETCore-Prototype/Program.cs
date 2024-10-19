@@ -72,12 +72,18 @@ builder.Services.AddDbContext<PetMinderDbContext>(options =>
 
 // Add IdentityCore services
 builder
-    .Services.AddIdentityCore<User>()
+    .Services.AddIdentity<User, IdentityRole>()
     .AddEntityFrameworkStores<PetMinderDbContext>() // Use your DbContext for Identity
     .AddApiEndpoints(); // Adds the API endpoints for register, login, etc.
 
 // Configure Authentication and Authorization
-builder.Services.AddAuthentication().AddBearerToken(IdentityConstants.BearerScheme);
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = IdentityConstants.BearerScheme; // Use Bearer scheme by default
+        options.DefaultChallengeScheme = IdentityConstants.BearerScheme;
+    })
+    .AddBearerToken(IdentityConstants.BearerScheme);
 
 builder
     .Services.AddAuthorizationBuilder()
@@ -132,7 +138,7 @@ app.UseAuthorization(); // Add authorization middleware
 app.MapGroup("api/auth").MapIdentityApi<User>().AllowAnonymous(); // Map Identity API for login, register, etc.
 
 // Map controllers
-app.MapControllers().RequireAuthorization(); // Require authorization for all controllers
+app.MapControllers(); // Require authorization for all controllers
 
 // Apply database migrations (if you have a method for that)
 app.ApplyMigrations();

@@ -14,6 +14,12 @@ public class MappingProfile : Profile
 
         CreateMap<UserCreateRequestDto, User>();
 
+        // **Handle update mappings explicitly**
+        CreateMap<UserUpdateRequestDto, User>()
+            .ForMember(dest => dest.FirstName, opt => opt.MapFrom(src => src.FirstName))
+            .ForMember(dest => dest.LastName, opt => opt.MapFrom(src => src.LastName))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+
         // Pet Mappings
         CreateMap<Pet, PetResponseDto>();
         CreateMap<PetCreateRequestDto, Pet>();
