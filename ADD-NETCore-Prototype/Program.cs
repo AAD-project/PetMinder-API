@@ -7,7 +7,6 @@ using AspNetCore.Identity.Extensions;
 using Azure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,32 +32,41 @@ builder.Services.AddDbContext<PetMinderDbContext>(options =>
 
 // Add IdentityCore services
 builder
-    .Services.AddIdentityCore<User>(options =>
+    .Services.AddIdentityCore<User>()
+    .AddEntityFrameworkStores<PetMinderDbContext>() // Use your DbContext for Identity
+    .AddApiEndpoints(); // Adds the API endpoints for register, login, etc.
+
+// Configure Authentication and Authorization
+builder
+    .Services.AddAuthentication(options =>
     {
-        options.Password.RequireDigit = true;
-        options.Password.RequireLowercase = true;
-        options.Password.RequireNonAlphanumeric = true;
-        options.Password.RequireUppercase = true;
-        options.Password.RequiredLength = 8;
+        options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
     })
-    .AddRoles<IdentityRole>() // Add role support
-    .AddEntityFrameworkStores<PetMinderDbContext>() // Use your existing context
-    .AddSignInManager() // Add the SignInManager service
-    .AddDefaultTokenProviders();
+    .AddCookie(
+        IdentityConstants.ApplicationScheme,
+        options =>
+        {
+            // Custom cookie behavior for unauthenticated or unauthorized access
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+            options.Events.OnRedirectToAccessDenied = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return Task.CompletedTask;
+            };
+        }
+    )
+    .AddBearerToken(IdentityConstants.BearerScheme); // Add support for token-based authentication
 
-// Add the built-in Identity API Endpoints (registration, login, etc.)
-builder.Services.AddIdentityApiEndpoints<User>();
-
-// Remove manual Authentication configuration since it's already handled by AddIdentityApiEndpoints
-
-// Add Authorization services
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(); // Add Authorization services
 
 // Add Swagger services for API documentation
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-});
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Add other services (as needed)
 builder.Services.AddSingleton<IPetService, PetService>();
@@ -76,19 +84,14 @@ builder.Services.AddControllers();
 // Build the application
 var app = builder.Build();
 
-Console.WriteLine($"Current Environment: {app.Environment.EnvironmentName}");
-
 // Enable Swagger in Development
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(); // Enable Swagger
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
-        c.RoutePrefix = "swagger"; // Serve Swagger at /swagger/index.html
-    });
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
+// Enable HTTPS redirection
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -99,9 +102,11 @@ app.UseAuthentication(); // Add authentication middleware
 app.UseRouting();
 app.UseAuthorization(); // Add authorization middleware
 
+// Map Identity API endpoints and allow anonymous access
+app.MapIdentityApi<User>().AllowAnonymous(); // Map Identity API for login, register, etc.
+
 // Map controllers
 app.MapControllers();
-app.MapIdentityApi<User>();
 
 // Apply database migrations (if you have a method for that)
 app.ApplyMigrations();
