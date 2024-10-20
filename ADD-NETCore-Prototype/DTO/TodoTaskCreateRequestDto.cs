@@ -7,5 +7,6 @@ namespace Api.DTOs
         public bool IsCompleted { get; set; }
         public string? UserId { get; set; }
         public string? PetId { get; set; }
+        public DateTime DueDate { get; set; }
     }
 }
