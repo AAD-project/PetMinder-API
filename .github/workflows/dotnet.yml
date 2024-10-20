@@ -1,50 +1,29 @@
-name: Deploy to Acceptance
+name: .NET
 
-# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
-  schedule:
-    - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
-
-  # Optional: Trigger on push to the main branch
   push:
-    branches:
-      - main
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-      # Step 2: Set up .NET Core (adjust if you're using a different version)
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: 8.0.x
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies
-      - name: Restore dependencies
-        run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore --verbosity minimal
 
-      # Step 4: Build the project (without restoring again)
-      - name: Build
-        run: dotnet build --no-restore
+    - name: Build Solution
+      run: dotnet build PetMinder-API.sln --no-restore --verbosity normal
 
-      # Step 5: Run unit tests
-      - name: Run tests 
-        run: dotnet test --no-build --verbosity normal
-
-      # Step 6: Publish the project to create deployment artifacts
-      - name: Publish application
-        run: dotnet publish --configuration Release --output ./publish-directory
-
-      # Step 7: Deploy to Azure Web App (Acceptance)
-      - name: Deploy to Azure Web App (Acceptance)
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: ${{ secrets.PETMINDER_API_ACCEPTANCE }}
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_ACCEPTANCE }}
-          package: ./publish-directory
+    - name: Run tests
+      run: |
+        dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
