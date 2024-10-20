@@ -29,4 +29,4 @@ jobs:
       run: dotnet build --no-restore
 
     - name: Run tests 
-      run: dotnet test --no-build --verbosity normal --logger "trx;LogFileName=test_results.trx"
+      run: dotnet test --no-build --verbosity normal
