@@ -25,33 +25,24 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies
+      # Step 3: Restore dependencies (for the entire repo or just for the specific project)
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore ADD-NETCore-Prototype
 
-      # Step 4: Build the project (without restoring again)
+      # Step 4: Build the ADD-NETCore-Prototype project (without restoring again)
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build ADD-NETCore-Prototype --no-restore
 
-      # Step 5: Run unit tests
+      # Step 5: Run unit tests for the entire project or specific folder
       - name: Run tests
         run: |
-          dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
+          dotnet test ADD-NETCore-Prototype.Tests/ADD-NETCore-Prototype.Tests.csproj --no-build --verbosity normal || true
 
-      # Step 6: Clean up and retain only the ADD-NETCore-Prototype directory
-      - name: Retain ADD-NETCore-Prototype directory
-        run: |
-          mkdir -p temp-directory
-          mv ADD-NETCore-Prototype temp-directory/
-          rm -rf ./*
-          mv temp-directory/ADD-NETCore-Prototype ./
-          rm -rf temp-directory
-
-      # Step 7: Publish the ADD-NETCore-Prototype project to create deployment artifacts
+      # Step 6: Publish the ADD-NETCore-Prototype project to create deployment artifacts
       - name: Publish application
         run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./publish-directory
 
-      # Step 8: Deploy to Azure Web App (Acceptance)
+      # Step 7: Deploy to Azure Web App (Acceptance)
       - name: Deploy to Azure Web App (Acceptance)
         uses: azure/webapps-deploy@v2
         with:
