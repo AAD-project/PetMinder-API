@@ -1,310 +1,331 @@
+using System.Collections.Generic;
+using System.Security.Claims;
+using System.Threading.Tasks;
 using Api.Controllers;
 using Api.DTOs;
 using Api.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Xunit;
+using System;
 
-namespace PetMinder_APITests.Controllers
+namespace Api.Tests.Controllers
 {
-   public class ReminderControllerTest
+    public class ReminderControllerTests
     {
         private readonly Mock<IReminderService> _mockReminderService;
         private readonly ReminderController _controller;
 
-        public ReminderControllerTest()
+        public ReminderControllerTests()
         {
             _mockReminderService = new Mock<IReminderService>();
             _controller = new ReminderController(_mockReminderService.Object);
         }
 
+        private void SetUser(string userId, string role = null)
+        {
+            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, userId) };
+            if (role != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+            var identity = new ClaimsIdentity(claims);
+            var user = new ClaimsPrincipal(identity);
+
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = user }
+            };
+        }
+
+        // ==================== Regular User Tests ====================
+
         [Fact]
-        public async Task CreateReminderAsync_ReturnsCreatedAtActionResult_WhenReminderIsValid()
+        public async Task CreateUserReminderAsync_ShouldReturnCreated_WhenReminderIsValid()
         {
             // Arrange
-            var reminderDto = new ReminderCreateRequestDto
-            {
-                UserId = "user1",
-                PetId = "pet1",
-                Title = "Reminder Title"
-                // Initialize other properties if needed
-            };
-            var reminderResponseDto = new ReminderResponseDto { Id = "1", UserId = "user1", Title = "Reminder Title" /* Initialize other properties if needed */ };
-
-            _mockReminderService
-                .Setup(service => service.CreateReminderAsync(reminderDto))
-                .ReturnsAsync(reminderResponseDto);
+            SetUser("user1");
+            var newReminder = new ReminderCreateRequestDto { Title = "Vet Appointment", ReminderDateTime = DateTime.Now.AddDays(1), UserId = "user1", PetId = "pet1" };
+            var createdReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1", ReminderDateTime = DateTime.Now.AddDays(1) };
+            _mockReminderService.Setup(s => s.CreateReminderAsync(newReminder)).ReturnsAsync(createdReminder);
 
             // Act
-            var result = await _controller.CreateReminderAsync(reminderDto);
+            var result = await _controller.CreateUserReminderAsync(newReminder);
 
             // Assert
-            var actionResult = Assert.IsType<CreatedAtActionResult>(result.Result);
-            var returnValue = Assert.IsType<ReminderResponseDto>(actionResult.Value);
-            Assert.Equal(reminderResponseDto.Id, returnValue.Id);
+            var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var response = createdResult.Value as ReminderResponseDto;
+            Assert.NotNull(response);
+            Assert.Equal(createdReminder.Id, response.Id);
+            Assert.Equal(createdReminder.Title, response.Title);
+            Assert.Equal(createdReminder.UserId, response.UserId);
         }
 
         [Fact]
-        public async Task CreateReminderAsync_ReturnsBadRequest_WhenModelStateIsInvalid()
+        public async Task CreateUserReminderAsync_ShouldReturnBadRequest_WhenReminderIsNull()
         {
             // Arrange
-            _controller.ModelState.AddModelError("Title", "Required");
+            SetUser("user1");
 
             // Act
-            var result = await _controller.CreateReminderAsync(new ReminderCreateRequestDto
-            {
-                UserId = "user1",
-                PetId = "pet1",
-                Title = "Reminder Title"
-            });
+            var result = await _controller.CreateUserReminderAsync(null);
 
             // Assert
             Assert.IsType<BadRequestObjectResult>(result.Result);
         }
 
         [Fact]
-        public async Task CreateReminderAsync_ReturnsInternalServerError_OnException()
+        public async Task GetUserReminderByIdAsync_ShouldReturnOk_WhenReminderExistsAndUserOwnsIt()
         {
             // Arrange
-            var reminderDto = new ReminderCreateRequestDto
-            {
-                UserId = "user1",
-                PetId = "pet1",
-                Title = "Reminder Title"
-            };
-            _mockReminderService.Setup(service => service.CreateReminderAsync(reminderDto)).ThrowsAsync(new System.Exception());
+            SetUser("user1");
+            var reminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(reminder);
 
             // Act
-            var result = await _controller.CreateReminderAsync(reminderDto);
+            var result = await _controller.GetUserReminderByIdAsync("reminder1");
 
             // Assert
-            var objectResult = Assert.IsType<ObjectResult>(result.Result);
-            Assert.Equal(500, objectResult.StatusCode);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(reminder, okResult.Value);
         }
 
         [Fact]
-        public async Task GetReminderByIdAsync_ReturnsOkObjectResult_WhenReminderExists()
+        public async Task GetUserReminderByIdAsync_ShouldReturnNotFound_WhenReminderDoesNotExist()
         {
             // Arrange
-            var reminderId = "1";
-            var reminderResponseDto = new ReminderResponseDto { Id = reminderId, UserId = "user1", Title = "Reminder Title" /* Initialize other properties if needed */ };
-
-            _mockReminderService
-                .Setup(service => service.GetReminderByIdAsync(reminderId))
-                .ReturnsAsync(reminderResponseDto);
+            SetUser("user1");
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync((ReminderResponseDto)null);
 
             // Act
-            var result = await _controller.GetReminderByIdAsync(reminderId);
-
-            // Assert
-            var actionResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnValue = Assert.IsType<ReminderResponseDto>(actionResult.Value);
-            Assert.Equal(reminderId, returnValue.Id);
-        }
-
-        [Fact]
-        public async Task GetReminderByIdAsync_ReturnsNotFoundResult_WhenReminderDoesNotExist()
-        {
-            // Arrange
-            var reminderId = "1";
-
-            _mockReminderService
-                .Setup(service => service.GetReminderByIdAsync(reminderId))
-                .ReturnsAsync((ReminderResponseDto)null);
-
-            // Act
-            var result = await _controller.GetReminderByIdAsync(reminderId);
+            var result = await _controller.GetUserReminderByIdAsync("reminder1");
 
             // Assert
             Assert.IsType<NotFoundResult>(result.Result);
         }
 
         [Fact]
-        public async Task GetReminderByIdAsync_ReturnsInternalServerError_OnException()
+        public async Task GetUserReminderByIdAsync_ShouldReturnForbid_WhenUserDoesNotOwnReminder()
         {
             // Arrange
-            _mockReminderService.Setup(service => service.GetReminderByIdAsync("1")).ThrowsAsync(new System.Exception());
+            SetUser("user1");
+            var reminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user2" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(reminder);
 
             // Act
-            var result = await _controller.GetReminderByIdAsync("1");
+            var result = await _controller.GetUserReminderByIdAsync("reminder1");
 
             // Assert
-            var objectResult = Assert.IsType<ObjectResult>(result.Result);
-            Assert.Equal(500, objectResult.StatusCode);
-        }
-
-       [Fact]
-        public async Task CreateReminderAsync_ReturnsBadRequest_WhenReminderDtoIsNull()
-        {
-            // Arrange
-            var reminderDto = (ReminderCreateRequestDto)null;
-
-            // Act
-            var result = await _controller.CreateReminderAsync(reminderDto);
-
-            // Assert
-            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result.Result);
-            Assert.Equal("Reminder data is invalid.", badRequestResult.Value);
+            Assert.IsType<ForbidResult>(result.Result);
         }
 
         [Fact]
-        public async Task GetAllRemindersByUserIdAsync_ReturnsEmptyList_WhenNoRemindersExist()
+        public async Task GetAllUserRemindersAsync_ShouldReturnOk_WhenRemindersExist()
         {
             // Arrange
-            var userId = "user1";
-            _mockReminderService.Setup(service => service.GetAllRemindersByUserIdAsync(userId)).ReturnsAsync(new List<ReminderResponseDto>());
+            SetUser("user1");
+            var reminders = new List<ReminderResponseDto> { new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" } };
+            _mockReminderService.Setup(s => s.GetAllRemindersByUserIdAsync("user1")).ReturnsAsync(reminders);
 
             // Act
-            var result = await _controller.GetAllRemindersByUserIdAsync(userId);
+            var result = await _controller.GetAllUserRemindersAsync();
 
             // Assert
-            var actionResult = Assert.IsType<OkObjectResult>(result.Result);
-            var returnValue = Assert.IsType<List<ReminderResponseDto>>(actionResult.Value);
-            Assert.Empty(returnValue);
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(reminders, okResult.Value);
         }
 
         [Fact]
-        public async Task GetAllRemindersByUserIdAsync_ReturnsInternalServerError_OnException()
+        public async Task UpdateUserReminderAsync_ShouldReturnNoContent_WhenReminderIsUpdatedSuccessfully()
         {
             // Arrange
-            var userId = "user1";
-            _mockReminderService.Setup(service => service.GetAllRemindersByUserIdAsync(userId)).ThrowsAsync(new System.Exception());
+            SetUser("user1");
+            var updatedReminder = new ReminderCreateRequestDto { Title = "Updated Vet Appointment", UserId = "user1", PetId = "pet1" };
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
 
             // Act
-            var result = await _controller.GetAllRemindersByUserIdAsync(userId);
-
-            // Assert
-            var objectResult = Assert.IsType<ObjectResult>(result.Result);
-            Assert.Equal(500, objectResult.StatusCode);
-        }
-
-        [Fact]
-        public async Task UpdateReminderAsync_ReturnsNoContentResult_WhenReminderIsUpdated()
-        {
-            // Arrange
-            var reminderId = "1";
-            var reminderDto = new ReminderCreateRequestDto
-            {
-                UserId = "user1",
-                PetId = "pet1",
-                Title = "Reminder Title"
-                // Initialize other properties if needed
-            };
-            var reminderResponseDto = new ReminderResponseDto { Id = reminderId, UserId = "user1", Title = "Reminder Title" /* Initialize other properties if needed */ };
-
-            _mockReminderService
-                .Setup(service => service.GetReminderByIdAsync(reminderId))
-                .ReturnsAsync(reminderResponseDto);
-
-            _mockReminderService
-                .Setup(service => service.UpdateReminderAsync(reminderId, reminderDto))
-                .ReturnsAsync(reminderResponseDto);
-
-            // Act
-            var result = await _controller.UpdateReminderAsync(reminderId, reminderDto);
+            var result = await _controller.UpdateUserReminderAsync("reminder1", updatedReminder);
 
             // Assert
             Assert.IsType<NoContentResult>(result);
         }
 
         [Fact]
-        public async Task UpdateReminderAsync_ReturnsNotFound_WhenReminderDoesNotExist()
+        public async Task UpdateUserReminderAsync_ShouldReturnNotFound_WhenReminderDoesNotExist()
         {
             // Arrange
-            var reminderDto = new ReminderCreateRequestDto { UserId = "user1", PetId = "pet1", Title = "Reminder Title" };
-            _mockReminderService.Setup(service => service.GetReminderByIdAsync("1")).ReturnsAsync((ReminderResponseDto)null);
+            SetUser("user1");
+            var updatedReminder = new ReminderCreateRequestDto { Title = "Updated Vet Appointment", UserId = "user1", PetId = "pet1" };
+
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync((ReminderResponseDto)null);
 
             // Act
-            var result = await _controller.UpdateReminderAsync("1", reminderDto);
+            var result = await _controller.UpdateUserReminderAsync("reminder1", updatedReminder);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
-        public async Task UpdateReminderAsync_ReturnsBadRequest_WhenModelStateIsInvalid()
+        public async Task UpdateUserReminderAsync_ShouldReturnForbid_WhenUserDoesNotOwnReminder()
         {
             // Arrange
-            _controller.ModelState.AddModelError("Title", "Required");
+            SetUser("user1");
+            var updatedReminder = new ReminderCreateRequestDto { Title = "Updated Vet Appointment", UserId = "user1", PetId = "pet1" };
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user2" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
 
             // Act
-            var result = await _controller.UpdateReminderAsync("1", new ReminderCreateRequestDto
-            {
-                UserId = "user1",
-                PetId = "pet1",
-                Title = "Reminder Title"
-            });
+            var result = await _controller.UpdateUserReminderAsync("reminder1", updatedReminder);
 
             // Assert
-            Assert.IsType<BadRequestObjectResult>(result);
+            Assert.IsType<ForbidResult>(result);
         }
 
         [Fact]
-        public async Task UpdateReminderAsync_ReturnsInternalServerError_OnException()
+        public async Task DeleteUserReminderAsync_ShouldReturnNoContent_WhenReminderIsDeletedSuccessfully()
         {
             // Arrange
-            var reminderDto = new ReminderCreateRequestDto { UserId = "user1", PetId = "pet1", Title = "Reminder Title" };
-            _mockReminderService.Setup(service => service.GetReminderByIdAsync("1")).ReturnsAsync(new ReminderResponseDto { Id = "1", UserId = "user1", Title = "Reminder Title" });
-            _mockReminderService.Setup(service => service.UpdateReminderAsync("1", reminderDto)).ThrowsAsync(new System.Exception());
+            SetUser("user1");
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
 
             // Act
-            var result = await _controller.UpdateReminderAsync("1", reminderDto);
-
-            // Assert
-            var objectResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, objectResult.StatusCode);
-        }
-
-        [Fact]
-        public async Task DeleteReminderAsync_ReturnsNoContentResult_WhenReminderIsDeleted()
-        {
-            // Arrange
-            var reminderId = "1";
-            var reminderResponseDto = new ReminderResponseDto { Id = reminderId, UserId = "user1", Title = "Reminder Title" /* Initialize other properties if needed */ };
-
-            _mockReminderService
-                .Setup(service => service.GetReminderByIdAsync(reminderId))
-                .ReturnsAsync(reminderResponseDto);
-
-            _mockReminderService
-                .Setup(service => service.DeleteReminderAsync(reminderId))
-                .Returns(Task.CompletedTask);
-
-            // Act
-            var result = await _controller.DeleteReminderAsync(reminderId);
+            var result = await _controller.DeleteUserReminderAsync("reminder1");
 
             // Assert
             Assert.IsType<NoContentResult>(result);
         }
 
         [Fact]
-        public async Task DeleteReminderAsync_ReturnsNotFound_WhenReminderDoesNotExist()
+        public async Task DeleteUserReminderAsync_ShouldReturnNotFound_WhenReminderDoesNotExist()
         {
             // Arrange
-            _mockReminderService.Setup(service => service.GetReminderByIdAsync("1")).ReturnsAsync((ReminderResponseDto)null);
+            SetUser("user1");
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync((ReminderResponseDto)null);
 
             // Act
-            var result = await _controller.DeleteReminderAsync("1");
+            var result = await _controller.DeleteUserReminderAsync("reminder1");
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
 
         [Fact]
-        public async Task DeleteReminderAsync_ReturnsInternalServerError_OnException()
+        public async Task DeleteUserReminderAsync_ShouldReturnForbid_WhenUserDoesNotOwnReminder()
         {
             // Arrange
-            _mockReminderService.Setup(service => service.GetReminderByIdAsync("1")).ReturnsAsync(new ReminderResponseDto { Id = "1", UserId = "user1", Title = "Reminder Title" });
-            _mockReminderService.Setup(service => service.DeleteReminderAsync("1")).ThrowsAsync(new System.Exception());
+            SetUser("user1");
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user2" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
 
             // Act
-            var result = await _controller.DeleteReminderAsync("1");
+            var result = await _controller.DeleteUserReminderAsync("reminder1");
 
             // Assert
-            var objectResult = Assert.IsType<ObjectResult>(result);
-            Assert.Equal(500, objectResult.StatusCode);
+            Assert.IsType<ForbidResult>(result);
+        }
+
+        // ==================== Admin Tests ====================
+
+        [Fact]
+        public async Task GetAllRemindersByUserIdForAdminAsync_ShouldReturnOk_WhenRemindersExist()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            var reminders = new List<ReminderResponseDto> { new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" } };
+            _mockReminderService.Setup(s => s.GetAllRemindersByUserIdAsync("user1")).ReturnsAsync(reminders);
+
+            // Act
+            var result = await _controller.GetAllRemindersByUserIdForAdminAsync("user1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(reminders, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetReminderByIdForAdminAsync_ShouldReturnOk_WhenReminderExists()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            var reminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(reminder);
+
+            // Act
+            var result = await _controller.GetReminderByIdForAdminAsync("reminder1");
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result.Result);
+            Assert.Equal(reminder, okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetReminderByIdForAdminAsync_ShouldReturnNotFound_WhenReminderDoesNotExist()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync((ReminderResponseDto)null);
+
+            // Act
+            var result = await _controller.GetReminderByIdForAdminAsync("reminder1");
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result.Result);
+        }
+
+        [Fact]
+        public async Task CreateReminderForUserAsync_ShouldReturnCreated_WhenReminderIsValid()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            var newReminder = new ReminderCreateRequestDto { Title = "Vet Appointment", UserId = "user1", PetId = "pet1", ReminderDateTime = DateTime.Now.AddDays(1) };
+            var createdReminder = new ReminderResponseDto { Id = "reminder1", Title = "Vet Appointment", UserId = "user1", NextReminderDateTimeList = new List<DateTime> { DateTime.Now.AddDays(1) } };
+            _mockReminderService.Setup(s => s.CreateReminderAsync(newReminder)).ReturnsAsync(createdReminder);
+
+            // Act
+            var result = await _controller.CreateReminderForUserAsync(newReminder);
+
+            // Assert
+            var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+            var response = createdResult.Value as ReminderResponseDto;
+            Assert.NotNull(response);
+            Assert.Equal(createdReminder.Id, response.Id);
+            Assert.Equal(createdReminder.Title, response.Title);
+            Assert.Equal(createdReminder.UserId, response.UserId);
+        }
+
+        [Fact]
+        public async Task UpdateReminderForAdminAsync_ShouldReturnNoContent_WhenReminderIsUpdatedSuccessfully()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            var updatedReminder = new ReminderCreateRequestDto { Title = "Updated Vet Appointment", ReminderDateTime = DateTime.Now.AddDays(2), UserId = "user1", PetId = "pet1" };
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", UserId = "user1", Title = "Vet Appointment" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
+
+            // Act
+            var result = await _controller.UpdateReminderForAdminAsync("reminder1", updatedReminder);
+
+            // Assert
+            Assert.IsType<NoContentResult>(result);
+        }
+
+        [Fact]
+        public async Task DeleteReminderForAdminAsync_ShouldReturnNoContent_WhenReminderIsDeletedSuccessfully()
+        {
+            // Arrange
+            SetUser("admin1", "Admin");
+            var existingReminder = new ReminderResponseDto { Id = "reminder1", UserId = "user1", Title = "Vet Appointment" };
+            _mockReminderService.Setup(s => s.GetReminderByIdAsync("reminder1")).ReturnsAsync(existingReminder);
+
+            // Act
+            var result = await _controller.DeleteReminderForAdminAsync("reminder1");
+
+            // Assert
+            Assert.IsType<NoContentResult>(result);
         }
     }
 }
