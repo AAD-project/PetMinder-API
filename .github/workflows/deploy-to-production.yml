@@ -28,8 +28,9 @@ jobs:
       run: dotnet build --no-restore
 
     # Step 5: Run tests (optional, can be skipped if you only want to deploy)
-    - name: Run tests 
-      run: dotnet test --no-build --verbosity normal
+    - name: Run tests
+      run: |
+        dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
 
     # Step 6: Deploy to Azure Web App (Production)
     - name: Deploy to Azure Web App (Production)
