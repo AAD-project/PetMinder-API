@@ -124,10 +124,10 @@ if (app.Environment.IsDevelopment())
 }
 
 // Enable HTTPS redirection
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// if (!app.Environment.IsDevelopment())
+// {
+//     app.UseHttpsRedirection();
+// }
 
 // Ensure Authentication and Authorization are used
 app.UseAuthentication(); // Add authentication middleware
