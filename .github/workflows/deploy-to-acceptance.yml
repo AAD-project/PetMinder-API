@@ -38,11 +38,20 @@ jobs:
         run: |
           dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
 
-      # Step 6: Publish the project to create deployment artifacts
-      - name: Publish application
-        run: dotnet publish --configuration Release --output ./publish-directory
+      # Step 6: Clean up and retain only the ADD-NETCore-Prototype directory
+      - name: Retain ADD-NETCore-Prototype directory
+        run: |
+          mkdir -p temp-directory
+          mv ADD-NETCore-Prototype temp-directory/
+          rm -rf ./*
+          mv temp-directory/ADD-NETCore-Prototype ./
+          rm -rf temp-directory
 
-      # Step 7: Deploy to Azure Web App (Acceptance)
+      # Step 7: Publish the ADD-NETCore-Prototype project to create deployment artifacts
+      - name: Publish application
+        run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./publish-directory
+
+      # Step 8: Deploy to Azure Web App (Acceptance)
       - name: Deploy to Azure Web App (Acceptance)
         uses: azure/webapps-deploy@v2
         with:
