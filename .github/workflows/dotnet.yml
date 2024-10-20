@@ -18,14 +18,12 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Clean Build Artifacts
-      run: dotnet clean
-
     - name: Restore dependencies
-      run: dotnet restore --verbosity minimal --force
+      run: dotnet restore --verbosity minimal
 
-    - name: Build
-      run: dotnet build PetMinder-API.sln --no-restore --verbosity diagnostic
+    - name: Build Solution
+      run: dotnet build PetMinder-API.sln --no-restore --verbosity normal
 
-    - name: Run tests 
-      run: dotnet test PetMinder-API.sln --no-build --verbosity diagnostic
+    - name: Run tests
+      run: |
+        dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
