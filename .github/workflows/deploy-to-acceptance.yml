@@ -1,10 +1,9 @@
 name: Deploy to Acceptance
 
-# Trigger the workflow on every push to the main branch
+# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
 
 jobs:
   build-and-deploy:
@@ -21,14 +20,19 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    # Step 3: Build the project
-    - name: Build the app
-      run: dotnet build
+    # Step 3: Restore dependencies
+    - name: Restore dependencies
+      run: dotnet restore
 
+    # Step 4: Build the project (without restoring again)
+    - name: Build
+      run: dotnet build --no-restore
 
-    -
+    # Step 5: Run unit tests (without logging or uploading)
+    - name: Run tests 
+      run: dotnet test --no-build --verbosity normal
 
-    # Step 4: Deploy to Azure Web App (Acceptance)
+    # Step 6: Deploy to Azure Web App (Acceptance)
     - name: Deploy to Azure Web App (Acceptance)
       uses: azure/webapps-deploy@v2
       with:

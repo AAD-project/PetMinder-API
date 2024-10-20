@@ -94,12 +94,12 @@ namespace Api.Controllers
                 newPet.OwnerId = userId; // Set the OwnerId to the authenticated user
                 var addedPet = await _petService.AddPetAsync(newPet, userId);
 
-                // Return an Ok response with the newly created pet
-                return Ok(new { message = "Pet successfully created", pet = addedPet });
+                // Ensure the response is in the correct format for the test
+                var response = new { message = "Pet successfully created", pet = addedPet };
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                // Log the exception for debugging purposes
                 return StatusCode(500, $"An error occurred while adding the pet: {ex.Message}");
             }
         }
