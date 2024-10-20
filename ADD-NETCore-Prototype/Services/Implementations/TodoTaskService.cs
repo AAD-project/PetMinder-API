@@ -73,5 +73,19 @@ namespace Api.Services.Implementations
             dbContext.Tasks.Remove(task);
             await dbContext.SaveChangesAsync();
         }
+
+        public async Task<IEnumerable<TodoTaskResponseDto>> GetUserTasksAsync(string userId)
+        {
+            using var dbContext = await CreateDbContextAsync();
+            var tasks = await dbContext.Tasks.Where(t => t.UserId == userId).ToListAsync();
+            return _mapper.Map<IEnumerable<TodoTaskResponseDto>>(tasks);
+        }
+
+        public async Task<IEnumerable<TodoTaskResponseDto>> GetTasksByPetIdAsync(string petId)
+        {
+            using var dbContext = await CreateDbContextAsync();
+            var tasks = await dbContext.Tasks.Where(t => t.PetId == petId).ToListAsync();
+            return _mapper.Map<IEnumerable<TodoTaskResponseDto>>(tasks);
+        }
     }
 }

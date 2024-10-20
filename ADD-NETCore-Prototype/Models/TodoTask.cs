@@ -2,7 +2,7 @@ namespace Api.Models
 {
     public class TodoTask
     {
-        public required string Id { get; set; } // Primary Key
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         public required string Type { get; set; }
         public required string Title { get; set; }
         public bool IsCompleted { get; set; }

@@ -2,7 +2,7 @@ namespace Api.Models
 {
     public class Reminder
     {
-        public required string Id { get; set; }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         public required string UserId { get; set; } // Foreign Key to the user who set the reminder
         public string? PetId { get; set; } // Foreign Key to the associated pet
         public required string Title { get; set; } // Title of the reminder

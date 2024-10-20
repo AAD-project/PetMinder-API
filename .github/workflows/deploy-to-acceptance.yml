@@ -1,0 +1,40 @@
+name: Deploy to Acceptance
+
+# Trigger the workflow on a schedule (every day at midnight UTC)
+on:
+  schedule:
+    - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code from the repository
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up .NET Core (adjust this if you're using a different stack)
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 8.0.x
+
+    # Step 3: Restore dependencies
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # Step 4: Build the project (without restoring again)
+    - name: Build
+      run: dotnet build --no-restore
+
+    # Step 5: Run unit tests (without logging or uploading)
+    - name: Run tests 
+      run: dotnet test --no-build --verbosity normal
+
+    # Step 6: Deploy to Azure Web App (Acceptance)
+    - name: Deploy to Azure Web App (Acceptance)
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_APP_NAME_ACCEPTANCE }}
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_ACCEPTANCE }}
