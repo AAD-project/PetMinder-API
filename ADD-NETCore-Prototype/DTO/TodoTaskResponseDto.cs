@@ -6,5 +6,6 @@ namespace Api.DTOs
         public required string Type { get; set; }
         public required string Title { get; set; }
         public bool IsCompleted { get; set; }
+        public string UserId { get; internal set; }
     }
 }

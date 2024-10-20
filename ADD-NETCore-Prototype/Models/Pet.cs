@@ -1,5 +1,3 @@
-using Microsoft.VisualBasic;
-
 namespace Api.Models
 {
     public class Pet
@@ -8,12 +6,14 @@ namespace Api.Models
         public required string Name { get; set; }
         public required string Gender { get; set; }
         public required string Type { get; set; }
-        public required DateFormat DateOfBirth { get; set; }
+
+        // Change from DateFormat to DateTime
+        public required DateTime DateOfBirth { get; set; }
+
         public required string Breed { get; set; }
         public float Weight { get; set; }
         public HealthData? HealthData { get; set; }
 
-        // Foreign key for User (Owner), no navigation property
-        public required string OwnerId { get; set; } // Nullable Foreign Key
+        public required string OwnerId { get; set; } // Foreign Key for User (Owner)
     }
 }

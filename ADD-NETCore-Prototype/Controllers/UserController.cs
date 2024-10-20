@@ -32,8 +32,13 @@ namespace Api.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<UserResponseDto>> GetCurrentUserAsync()
         {
-            // Get the authenticated user's ID from the token
+            // Get the authenticated user's ID from the token (NameIdentifier claim)
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userId == null)
+            {
+                return Unauthorized("User is not authenticated.");
+            }
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -119,7 +124,7 @@ namespace Api.Controllers
 
         // GET api/user/{id}
         [Authorize(Roles = "Admin")]
-        [HttpGet("{id}")]
+        [HttpGet("admin/{id}")]
         public async Task<ActionResult<UserResponseDto>> GetUserByIdAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
@@ -136,7 +141,7 @@ namespace Api.Controllers
 
         // GET api/user
         [Authorize(Roles = "Admin")]
-        [HttpGet]
+        [HttpGet("admin")]
         public ActionResult<IEnumerable<UserResponseDto>> GetAllUsers()
         {
             var users = _userManager.Users.ToList();
@@ -149,7 +154,7 @@ namespace Api.Controllers
 
         // POST api/user
         [Authorize(Roles = "Admin")]
-        [HttpPost]
+        [HttpPost("admin")]
         public async Task<ActionResult<UserResponseDto>> CreateUserAsync(
             [FromBody] UserCreateRequestDto newUserDto
         )
@@ -178,7 +183,7 @@ namespace Api.Controllers
 
         // PATCH api/user/{id}
         [Authorize(Roles = "Admin")]
-        [HttpPatch("{id}")]
+        [HttpPatch("admin/{id}")]
         public async Task<IActionResult> UpdateUserByIdAsync(
             string id,
             [FromBody] UserUpdateRequestDto updatedUserDto
@@ -209,7 +214,7 @@ namespace Api.Controllers
 
         // DELETE api/user/{id}
         [Authorize(Roles = "Admin")]
-        [HttpDelete("{id}")]
+        [HttpDelete("admin/{id}")]
         public async Task<IActionResult> DeleteUserByIdAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);

@@ -30,20 +30,29 @@ namespace Api.Services.Implementations
             return _mapper.Map<PetResponseDto>(pet);
         }
 
-        public async Task<PetResponseDto> AddPetAsync(PetCreateRequestDto petDto)
+        public async Task<PetResponseDto> AddPetAsync(PetCreateRequestDto petDto, string userId)
         {
             if (petDto == null)
-                throw new ArgumentNullException(nameof(petDto), "Pet DTO cannot be null.");
+                throw new ArgumentNullException(nameof(petDto), "Pet cannot be null.");
 
+            // Ensure that the userId is not null or empty
+            if (string.IsNullOrEmpty(userId))
+                throw new ArgumentNullException(nameof(userId), "User ID cannot be null or empty.");
+
+            // Create the DbContext (ensure this is correct based on your setup)
             using var dbContext = await CreateDbContextAsync();
 
-            // Map the incoming DTO to the Pet entity
+            // Map the DTO to the Pet entity
             var pet = _mapper.Map<Pet>(petDto);
 
+            // Set the OwnerId (the authenticated user's ID)
+            pet.OwnerId = userId;
+
+            // Add the pet to the database
             await dbContext.Pets.AddAsync(pet);
             await dbContext.SaveChangesAsync();
 
-            // Return the created pet as a response DTO
+            // Map the saved entity back to a response DTO and return it
             return _mapper.Map<PetResponseDto>(pet);
         }
 
@@ -134,6 +143,18 @@ namespace Api.Services.Implementations
             // Remove HealthData
             pet.HealthData = null;
             await dbContext.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<PetResponseDto>> GetUserPetsAsync(string userId)
+        {
+            using var dbContext = await CreateDbContextAsync();
+            var pets = await dbContext
+                .Pets.Where(p => p.OwnerId == userId)
+                .Include(p => p.HealthData)
+                .ToListAsync();
+
+            // Map the list of Pet entities to a list of PetResponseDto
+            return _mapper.Map<IEnumerable<PetResponseDto>>(pets);
         }
     }
 }

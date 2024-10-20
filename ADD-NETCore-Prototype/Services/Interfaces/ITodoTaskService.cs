@@ -14,5 +14,8 @@ namespace Api.Services.Interfaces
             TodoTaskCreateRequestDto updatedTaskDto
         );
         Task DeleteTaskAsync(string id);
+        Task<IEnumerable<TodoTaskResponseDto>> GetUserTasksAsync(string userId);
+
+        Task<IEnumerable<TodoTaskResponseDto>> GetTasksByPetIdAsync(string petId);
     }
 }
