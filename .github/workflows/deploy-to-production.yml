@@ -11,25 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout the source code from the repository
       - uses: actions/checkout@v4
 
+      # Set up .NET Core SDK version 8.x
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      # Target the specific project file for ADD-NETCore-Prototype
+      # Build the project targeting the specific csproj file
       - name: Build ADD-NETCore-Prototype
         run: dotnet build ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./API_Publish
 
+      # Publish the project to a folder
       - name: Publish ADD-NETCore-Prototype
         run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj -c Release --output ./API_Publish
 
+      # Upload the published API as an artifact for the deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-api
-          path: ./API_Publish  # Only package the API from ADD-NETCore-Prototype
+          path: ./API_Publish  # Upload the contents of the API_Publish folder
 
   deploy:
     runs-on: ubuntu-latest
@@ -38,14 +42,16 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write  # Required for requesting the JWT
 
     steps:
+      # Download the artifact produced from the build job
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-api  # Download the specific API artifact
-      
+          name: .net-api  # The artifact is named ".net-api" from the build step
+
+      # Log in to Azure using credentials stored in GitHub Secrets
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -53,10 +59,11 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_108C598E6480479F86B36BD2506B0EEC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AA5F3C4C6FC84773B3CC445560EB036D }}
 
+      # Deploy the application to Azure Web App
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'petminder-production-API'
-          slot-name: 'Production'
-          package: './API_Publish'  # Ensure only the API from ADD-NETCore-Prototype is deployed
+          app-name: 'petminder-production-API'  # Name of the Azure Web App
+          slot-name: 'Production'               # Slot name
+          package: './API_Publish'              # Path to the downloaded package
