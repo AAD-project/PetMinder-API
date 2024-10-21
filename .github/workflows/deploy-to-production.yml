@@ -1,16 +1,18 @@
 name: Deploy to Production
 
-# Trigger the workflow on push to the production branch
 on:
   push:
     branches:
-      - Production  # Trigger on production branch
+      - Production
 
-  workflow_dispatch:  # To allow manual triggers
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Grant permission to request an OIDC token
+      contents: read   # Permission to read repository contents
 
     steps:
       # Step 1: Checkout the code from the repository
@@ -23,20 +25,20 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies (for the entire repo or just for the specific project)
+      # Step 3: Restore dependencies
       - name: Restore dependencies
         run: dotnet restore ADD-NETCore-Prototype
 
-      # Step 4: Build the ADD-NETCore-Prototype project (without restoring again)
+      # Step 4: Build the project
       - name: Build
         run: dotnet build ADD-NETCore-Prototype --no-restore
 
-      # Step 5: Run unit tests for the entire project or specific folder
+      # Step 5: Run unit tests
       - name: Run tests
         run: |
           dotnet test ADD-NETCore-Prototype.Tests/ADD-NETCore-Prototype.Tests.csproj --no-build --verbosity normal || true
 
-      # Step 6: Publish the ADD-NETCore-Prototype project to create deployment artifacts
+      # Step 6: Publish the project
       - name: Publish application
         run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./publish-directory
 
@@ -52,5 +54,5 @@ jobs:
       - name: Deploy to Azure Web App (Production)
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'petminder-production-API'  # This should be the name of your Azure App Service
+          app-name: 'petminder-production-API'
           package: ./publish-directory
