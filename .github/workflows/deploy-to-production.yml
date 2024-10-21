@@ -20,10 +20,10 @@ jobs:
 
       # Target the specific project file for ADD-NETCore-Prototype
       - name: Build ADD-NETCore-Prototype
-        run: dotnet build ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --configuration Release --output ./API_Publish
+        run: dotnet build ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./API_Publish
 
       - name: Publish ADD-NETCore-Prototype
-        run: dotnet publish ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj -c Release --output ./API_Publish
+        run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj -c Release --output ./API_Publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
