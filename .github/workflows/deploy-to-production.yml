@@ -18,17 +18,18 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      - name: Build with dotnet
-        run: dotnet build --configuration Release
+      # Target the specific project file for ADD-NETCore-Prototype
+      - name: Build ADD-NETCore-Prototype
+        run: dotnet build ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --configuration Release --output ./API_Publish
 
-      - name: dotnet publish
-        run: dotnet publish -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      - name: Publish ADD-NETCore-Prototype
+        run: dotnet publish ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj -c Release --output ./API_Publish
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          name: .net-api
+          path: ./API_Publish  # Only package the API from ADD-NETCore-Prototype
 
   deploy:
     runs-on: ubuntu-latest
@@ -43,7 +44,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: .net-app
+          name: .net-api  # Download the specific API artifact
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -58,5 +59,4 @@ jobs:
         with:
           app-name: 'petminder-production-API'
           slot-name: 'Production'
-          package: .
-          
+          package: './API_Publish'  # Ensure only the API from ADD-NETCore-Prototype is deployed
