@@ -6,7 +6,7 @@ namespace Api.Services.Interfaces
     {
         Task<IEnumerable<PetResponseDto>> GetAllPetsAsync();
         Task<PetResponseDto> GetPetByIdAsync(string id);
-        Task<PetResponseDto> AddPetAsync(PetCreateRequestDto petDto);
+        Task<PetResponseDto> AddPetAsync(PetCreateRequestDto petDto, string userId);
         Task<PetResponseDto> UpdatePetAsync(string id, PetCreateRequestDto updatedPetDto);
         Task DeletePetAsync(string id);
         Task<HealthDataResponseDto> AddHealthDataAsync(
@@ -14,5 +14,7 @@ namespace Api.Services.Interfaces
             HealthDataCreateRequestDto healthDataDto
         );
         Task DeleteHealthDataAsync(string petId, string healthDataId);
+
+        Task<IEnumerable<PetResponseDto>> GetUserPetsAsync(string userId);
     }
 }

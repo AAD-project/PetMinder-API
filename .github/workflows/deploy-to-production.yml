@@ -1,0 +1,40 @@
+name: Deploy to Production
+
+# Manually trigger this workflow using `workflow_dispatch`
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code from the repository (main branch)
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up .NET Core (adjust this if you're using a different stack)
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 8.0.x
+
+    # Step 3: Restore dependencies
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # Step 4: Build the project
+    - name: Build
+      run: dotnet build --no-restore
+
+    # Step 5: Run tests (optional, can be skipped if you only want to deploy)
+    - name: Run tests
+      run: |
+        dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
+
+    # Step 6: Deploy to Azure Web App (Production)
+    - name: Deploy to Azure Web App (Production)
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: ${{ secrets.AZURE_APP_NAME_PRODUCTION }}
+        publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_PRODUCTION }}

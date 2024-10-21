@@ -3,6 +3,7 @@ namespace Api.DTOs
     public class PetResponseDto
     {
         public required string Id { get; set; }
+        public required string OwnerId { get; set; }
         public string? Name { get; set; }
         public string? Gender { get; set; }
         public string? Type { get; set; }

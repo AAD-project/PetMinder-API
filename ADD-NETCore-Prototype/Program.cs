@@ -1,93 +1,146 @@
 using Api.Data.Implementations;
 using Api.Data.Interface;
-using Api.Data.Seeders;
 using Api.Models;
 using Api.Services.Implementations;
 using Api.Services.Interfaces;
 using AspNetCore.Identity.Extensions;
+using Azure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Keep existing service registrations as is
-builder.Services.AddSingleton<IPetService, PetService>();
-builder.Services.AddSingleton<IUserService, UserService>();
-builder.Services.AddSingleton<ITodoTaskService, TodoTaskService>();
-builder.Services.AddSingleton<IReminderService, ReminderService>();
-builder.Services.AddSingleton<IDbContextFactory, DbContextFactory>();
-builder.Services.AddScoped<DatabaseSeeder>();
+// Load environment-specific appsettings.{Environment}.json file (e.g., appsettings.Development.json)
+builder.Configuration.AddJsonFile(
+    $"appsettings.{builder.Environment.EnvironmentName}.json",
+    optional: true,
+    reloadOnChange: true
+);
 
-// Add controllers
-builder.Services.AddControllers();
+// Add Azure Key Vault to configuration (Key Vault URI from appsettings.json)
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
 
-// Configure Swagger/OpenAPI
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// fiigure out how to add this to the configuration to ALSO work with docker.
 
-// Configure Authentication and Authorization
-builder.Services.AddAuthorization();
+// builder.Configuration.AddAzureKeyVault(
+//     new Uri(keyVaultUri),
+//     new DefaultAzureCredential(),
+//     new Azure.Extensions.AspNetCore.Configuration.Secrets.AzureKeyVaultConfigurationOptions()
+// );
 
-builder
-    .Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-    })
-    .AddCookie(
-        IdentityConstants.ApplicationScheme,
-        options =>
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Your API", Version = "v1" });
+
+    // Configure Bearer token authentication for Swagger
+    options.AddSecurityDefinition(
+        "Bearer",
+        new OpenApiSecurityScheme
         {
-            options.Events.OnRedirectToLogin = context =>
-            {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return Task.CompletedTask;
-            };
-            options.Events.OnRedirectToAccessDenied = context =>
-            {
-                context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                return Task.CompletedTask;
-            };
+            In = ParameterLocation.Header,
+            Description = "Please enter token in the following format: Bearer {token}",
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
         }
-    )
-    .AddBearerToken(IdentityConstants.BearerScheme);
+    );
 
-builder
-    .Services.AddIdentityCore<User>()
-    .AddEntityFrameworkStores<PetMinderDbContext>()
-    .AddApiEndpoints();
+    // Add security requirement to enforce using Bearer token
+    options.AddSecurityRequirement(
+        new OpenApiSecurityRequirement()
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer",
+                    },
+                },
+                new string[] { }
+            },
+        }
+    );
+});
 
-// Register the DbContextFactory correctly
-builder.Services.AddDbContextFactory<PetMinderDbContext>(options =>
+// Register Identity and configure database context for Identity
+builder.Services.AddDbContext<PetMinderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
+// Add IdentityCore services
+builder
+    .Services.AddIdentity<User, IdentityRole>()
+    .AddEntityFrameworkStores<PetMinderDbContext>() // Use your DbContext for Identity
+    .AddApiEndpoints(); // Adds the API endpoints for register, login, etc.
+
+// Configure Authentication and Authorization
+builder
+    .Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = IdentityConstants.BearerScheme; // Use Bearer scheme by default
+        options.DefaultChallengeScheme = IdentityConstants.BearerScheme;
+    })
+    .AddBearerToken(IdentityConstants.BearerScheme);
+
+builder
+    .Services.AddAuthorizationBuilder()
+    .AddPolicy(
+        "api",
+        p =>
+        {
+            p.RequireAuthenticatedUser();
+            p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+        }
+    );
+
+// Add Swagger services for API documentation
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add other services (as needed)
+builder.Services.AddSingleton<IPetService, PetService>();
+builder.Services.AddSingleton<ITodoTaskService, TodoTaskService>();
+builder.Services.AddSingleton<IReminderService, ReminderService>();
+builder.Services.AddSingleton<IDbContextFactory, DbContextFactory>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Add AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+// Add this to register controllers
+builder.Services.AddControllers();
+
+// Build the applicationa
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Enable Swagger in Development
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage(); // Show detailed errors in development
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Use HTTPS redirection
-app.UseHttpsRedirection();
+// Enable HTTPS redirection
+// if (!app.Environment.IsDevelopment())
+// {
+//     app.UseHttpsRedirection();
+// }
 
-app.UseAuthentication();
-app.UseAuthorization();
+// Ensure Authentication and Authorization are used
+app.UseAuthentication(); // Add authentication middleware
+app.UseRouting();
+app.UseAuthorization(); // Add authorization middleware
 
-// Map controllers and explicitly allow anonymous access where needed
-app.MapControllers();
+// Map Identity API endpoints and allow anonymous access
+app.MapGroup("api/auth").MapIdentityApi<User>().AllowAnonymous(); // Map Identity API for login, register, etc.
 
-// Apply database migrations
+// Map controllers
+app.MapControllers(); // Require authorization for all controllers
+
+// Apply database migrations (if you have a method for that)
 app.ApplyMigrations();
 
-// Map identity endpoints, keeping in mind to support API access
-app.MapIdentityApi<User>().AllowAnonymous(); //sus out the AllowAnonymous
-
-// Run the application
 app.Run();
