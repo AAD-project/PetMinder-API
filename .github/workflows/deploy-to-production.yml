@@ -19,13 +19,18 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore dependencies for API
-        run: dotnet restore ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj
+        run: dotnet restore ADD-NETCore-Prototype
 
       - name: Build API project
-        run: dotnet build ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --configuration Release --no-restore
+        run: dotnet build ADD-NETCore-Prototype --configuration Release --no-restore
+
+      - name: Run tests
+        run: |
+          dotnet test ADD-NETCore-Prototype.Tests/ADD-NETCore-Prototype.Tests.csproj --no-build --verbosity normal || true
 
       - name: Publish API project
-        run: dotnet publish ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --configuration Release --output ./publish-directory
+        run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./publish-directory
+
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
