@@ -8,7 +8,7 @@ on:
   # Optional: Trigger on push to the main branch
   push:
     branches:
-      - main
+      - production
 
 jobs:
   build-and-deploy:
