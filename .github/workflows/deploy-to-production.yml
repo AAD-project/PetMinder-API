@@ -21,28 +21,28 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies (for the entire repo or just for the specific project)
+      # Step 3: Restore dependencies for the main project only
       - name: Restore dependencies
         run: dotnet restore ADD-NETCore-Prototype
 
-      # Step 4: Build the ADD-NETCore-Prototype project (without restoring again)
+      # Step 4: Build the main project without restoring again
       - name: Build
         run: dotnet build ADD-NETCore-Prototype --no-restore
 
-      # Step 5: Run unit tests for the entire project or specific folder
+      # Step 5: Optional - Run tests (you can keep this step or remove it if not needed)
       - name: Run tests
         run: |
-          dotnet test ADD-NETCore-Prototype.Tests/ADD-NETCore-Prototype.Tests.csproj --no-build --verbosity normal || true
+          dotnet test PetMinder-APITests/PetMinder-APITests.csproj --no-build --verbosity normal || true
 
-      # Step 6: Publish the ADD-NETCore-Prototype project to create deployment artifacts
+      # Step 6: Publish the main project (excluding tests)
       - name: Publish application
         run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./API_Publish
 
-      # Debug step: Check if the publish folder exists and contains files
+      # Step 7: Verify publish output
       - name: Verify publish output
         run: ls -la ./API_Publish
 
-      # Upload the published API as an artifact for the deployment job
+      # Step 8: Upload the published API as an artifact for the deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -66,7 +66,7 @@ jobs:
           name: .net-api  # The artifact is named ".net-api" from the build step
           path: ./API_Publish  # Extract the artifact to API_Publish folder
 
-      # Debug step: List the contents of the artifact folder
+      # Verify the artifact contents
       - name: List contents of API_Publish
         run: ls -la ./API_Publish
 
