@@ -14,19 +14,25 @@ jobs:
       # Checkout the source code from the repository
       - uses: actions/checkout@v4
 
+      # Copy the API project to a new folder to isolate it from other projects
+      - name: Copy PetMinder API to a separate folder
+        run: |
+          mkdir -p ./PetMinder-API-Only
+          cp -r ADD-NETCore-Prototype/PetMinder-API ./PetMinder-API-Only/
+
       # Set up .NET Core SDK version 8.x
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
 
-      # Build the API project only, skipping the test project
+      # Build the API project only, from the isolated folder
       - name: Build PetMinder API
-        run: dotnet build ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./API_Publish
+        run: dotnet build ./PetMinder-API-Only/PetMinder-API/PetMinder-API.csproj --configuration Release --output ./API_Publish
 
       # Publish the API project to a folder, skipping the test project
       - name: Publish PetMinder API
-        run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj -c Release --output ./API_Publish
+        run: dotnet publish ./PetMinder-API-Only/PetMinder-API/PetMinder-API.csproj -c Release --output ./API_Publish
 
       # Debug step: Check if the publish folder exists and contains files
       - name: Verify publish output
