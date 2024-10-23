@@ -1,11 +1,8 @@
 name: Deploy to Production
 
-# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
   schedule:
     - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
-
-  # Optional: Trigger on push to the main branch
   push:
     branches:
       - Production
@@ -19,38 +16,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the code from the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Updated to v3
 
-      # Step 2: Set up .NET Core (adjust if you're using a different version)
       - name: Set up .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3  # Updated to v3
         with:
           dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies (for the specific project)
       - name: Restore dependencies
         run: dotnet restore ADD-NETCore-Prototype/PetMinder-API.csproj
 
-      # Step 4: Build the ADD-NETCore-Prototype project (without restoring again)
       - name: Build
         run: dotnet build ADD-NETCore-Prototype/PetMinder-API.csproj --no-restore
 
-      # Step 5: Run unit tests for the entire project or specific folder
       - name: Run tests
         run: |
           dotnet test ADD-NETCore-Prototype.Tests/PetMinder-API.Tests.csproj --no-build --verbosity normal || true
-      
-      # Step 6: Publish the ADD-NETCore-Prototype project to create deployment artifacts
+
       - name: Publish application
         run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./publish-directory
 
-      # Step 7: Log contents of the publish directory
       - name: Verify publish directory contents
         run: ls -la ./publish-directory
 
-      # Step 8: Upload the artifact
+      # Extra check before uploading artifact
+      - name: Verify publish directory before uploading artifact
+        run: ls -la ./publish-directory
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
@@ -70,8 +63,8 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: net-app  # Make sure the name is consistent with what was uploaded
-      
+          name: net-app
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
