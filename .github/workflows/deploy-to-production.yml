@@ -28,7 +28,9 @@ jobs:
 
       # Build the API project only, from the isolated folder
       - name: Build PetMinder API
-        run: dotnet build ./PetMinder-API-Only/PetMinder-API.csproj --configuration Release --output ./API_Publish
+        run: |
+          ls        
+          dotnet build ./PetMinder-API-Only/PetMinder-API.csproj --configuration Release --output ./API_Publish
 
       # Publish the API project to a folder, skipping the test project
       - name: Publish PetMinder API
