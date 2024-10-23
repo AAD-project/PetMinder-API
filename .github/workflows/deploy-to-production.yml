@@ -1,10 +1,11 @@
 name: Deploy to Production
 
-# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
   push:
     branches:
-      - production
+      - Production
+  workflow_dispatch:
+
 
 jobs:
   build-and-deploy:
