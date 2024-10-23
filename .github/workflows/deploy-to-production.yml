@@ -46,7 +46,11 @@ jobs:
       - name: Publish application
         run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./publish-directory
 
-      # Step 7: Upload the artifact
+      # Step 7: Log contents of the publish directory
+      - name: Verify publish directory contents
+        run: ls -la ./publish-directory
+
+      # Step 8: Upload the artifact
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
