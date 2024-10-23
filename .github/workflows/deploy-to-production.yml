@@ -10,6 +10,10 @@ on:
     branches:
       - Production
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -49,6 +53,7 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FF59F2158E59457C8400C49A14DCEC33 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_108C598E6480479F86B36BD2506B0EEC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AA5F3C4C6FC84773B3CC445560EB036D }}
+          auth-type: oidc
 
       - name: Deploy to Azure Web App (Production)
         uses: azure/webapps-deploy@v3
