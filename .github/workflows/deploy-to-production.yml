@@ -1,13 +1,17 @@
-name: Build and deploy ASP.Net Core app to Azure Web App - petminder-production-API
+name: Deploy to Production
 
+# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
+  schedule:
+    - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
+
+  # Optional: Trigger on push to the main branch
   push:
     branches:
-      - Production
-  workflow_dispatch:
+      - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,69 +25,30 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      # Step 3: Restore dependencies (for the entire repo or just for the specific project)
+      # Step 3: Restore dependencies (for the specific project)
       - name: Restore dependencies
-        run: dotnet restore ADD-NETCore-Prototype
+        run: dotnet restore ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj
 
       # Step 4: Build the ADD-NETCore-Prototype project (without restoring again)
       - name: Build
-        run: dotnet build ADD-NETCore-Prototype --no-restore
+        run: dotnet build ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --no-restore
 
       # Step 5: Run unit tests for the entire project or specific folder
       - name: Run tests
         run: |
           dotnet test ADD-NETCore-Prototype.Tests/ADD-NETCore-Prototype.Tests.csproj --no-build --verbosity normal || true
-
       
       # Step 6: Publish the ADD-NETCore-Prototype project to create deployment artifacts
       - name: Publish application
-        run: dotnet publish ADD-NETCore-Prototype --configuration Release --output ./API_Publish
+        run: dotnet publish ADD-NETCore-Prototype/ADD-NETCore-Prototype.csproj --configuration Release --output ./publish-directory
 
-      # Debug step: Check if the publish folder exists and contains files
-      - name: Verify publish output
-        run: ls -la ./API_Publish
-
-      # Upload the published API as an artifact for the deployment job
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: .net-api
-          path: ./API_Publish  # Upload the contents of the API_Publish folder
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write  # Required for requesting the JWT
-
-    steps:
-      # Download the artifact produced from the build job
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-api  # The artifact is named ".net-api" from the build step
-          path: ./API_Publish  # Extract the artifact to API_Publish folder
-
-      # Debug step: List the contents of the artifact folder
-      - name: List contents of API_Publish
-        run: ls -la ./API_Publish
-
-      # Log in to Azure using credentials stored in GitHub Secrets
-      - name: Login to Azure
-        uses: azure/login@v2
+      # Step 7: Deploy to Azure Web App (Production)
+      - name: Deploy to Azure Web App (Production)
+        uses: azure/webapps-deploy@v3
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FF59F2158E59457C8400C49A14DCEC33 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_108C598E6480479F86B36BD2506B0EEC }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AA5F3C4C6FC84773B3CC445560EB036D }}
-
-      # Deploy the application to Azure Web App
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'petminder-production-API'  # Name of the Azure Web App
-          slot-name: 'Production'               # Slot name
-          package: './API_Publish'              # Path to the downloaded package
+          app-name: 'petminder-production-API'
+          slot-name: 'Production'
+          package: ./publish-directory
