@@ -2,10 +2,6 @@ name: Deploy to Production
 
 # Trigger the workflow on a schedule (every day at midnight UTC)
 on:
-  schedule:
-    - cron: "0 0 * * *"  # This runs at 00:00 UTC every day
-
-  # Optional: Trigger on push to the main branch
   push:
     branches:
       - production
