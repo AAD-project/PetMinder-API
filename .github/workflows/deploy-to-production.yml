@@ -20,11 +20,11 @@ jobs:
         with:
           dotnet-version: '8.x'
 
-      # Build the API project only, not the tests
+      # Build the API project only, skipping the test project
       - name: Build PetMinder API
         run: dotnet build ADD-NETCore-Prototype/PetMinder-API.csproj --configuration Release --output ./API_Publish
 
-      # Publish the API project to a folder, excluding the test project
+      # Publish the API project to a folder, skipping the test project
       - name: Publish PetMinder API
         run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj -c Release --output ./API_Publish
 
