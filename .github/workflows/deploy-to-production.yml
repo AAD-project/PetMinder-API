@@ -28,6 +28,10 @@ jobs:
       - name: Publish ADD-NETCore-Prototype
         run: dotnet publish ADD-NETCore-Prototype/PetMinder-API.csproj -c Release --output ./API_Publish
 
+      # Debug step: Check if the publish folder exists and contains files
+      - name: Verify publish output
+        run: ls -la ./API_Publish
+
       # Upload the published API as an artifact for the deployment job
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -50,6 +54,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: .net-api  # The artifact is named ".net-api" from the build step
+          path: ./API_Publish  # Extract the artifact to API_Publish folder
+
+      # Debug step: List the contents of the artifact folder
+      - name: List contents of API_Publish
+        run: ls -la ./API_Publish
 
       # Log in to Azure using credentials stored in GitHub Secrets
       - name: Login to Azure
