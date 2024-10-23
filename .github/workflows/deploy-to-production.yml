@@ -18,7 +18,7 @@ jobs:
       - name: Copy PetMinder API to a separate folder
         run: |
           mkdir -p ./PetMinder-API-Only
-          cp -r ADD-NETCore-Prototype/PetMinder-API ./PetMinder-API-Only/
+          cp -r ADD-NETCore-Prototype/ ./PetMinder-API-Only/
 
       # Set up .NET Core SDK version 8.x
       - name: Set up .NET Core
