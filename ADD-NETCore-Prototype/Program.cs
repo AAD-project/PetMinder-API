@@ -4,7 +4,6 @@ using Api.Models;
 using Api.Services.Implementations;
 using Api.Services.Interfaces;
 using AspNetCore.Identity.Extensions;
-using Azure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -116,17 +115,18 @@ builder.Services.AddControllers();
 // Build the applicationa
 var app = builder.Build();
 
-// Enable Swagger in Development
-if (app.Environment.IsDevelopment())
+// Enable Swagger for all environments
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Your API v1");
+    options.RoutePrefix = string.Empty; // Serve Swagger UI at the app's root
+});
 
-// Enable HTTPS redirection
+// Enable HTTPS redirection (optional, based on your use case)
 // if (!app.Environment.IsDevelopment())
 // {
-//     app.UseHttpsRedirection();
+//     app.UseHttpsRedirection(); // Only force HTTPS redirection in non-development environments
 // }
 
 // Ensure Authentication and Authorization are used
