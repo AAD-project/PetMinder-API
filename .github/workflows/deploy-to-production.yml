@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v2
 
       # Step 2: Set up .NET Core (adjust if you're using a different version)
-      - name: Set up .NET Core
+      - name: Set up .NET Core env
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 8.0.x
