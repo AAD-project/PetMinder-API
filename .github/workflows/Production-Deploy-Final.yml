@@ -1,10 +1,10 @@
-name: Deploy to Production
+name: Deploy to Production-Final
 
 on:
   # Optional: Trigger on push to the Production branch
   push:
     branches:
-      - production
+      - Production
 
 jobs:
   build-and-deploy:
