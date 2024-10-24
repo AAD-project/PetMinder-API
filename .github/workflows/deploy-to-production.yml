@@ -1,4 +1,4 @@
-name: Deploy to Production
+name: Deploy to Acceptance
 
 # Trigger the workflow on a schedule (every day at midnight UTC)
 on:
