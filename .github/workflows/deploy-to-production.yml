@@ -1,8 +1,7 @@
-name: Deploy to Acceptance
+name: Deploy to Production
 
-# Trigger the workflow on a schedule (every day at midnight UTC)
 on:
-  # Optional: Trigger on push to the main branch
+  # Optional: Trigger on push to the Production branch
   push:
     branches:
       - production
